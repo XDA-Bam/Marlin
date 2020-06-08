@@ -2274,15 +2274,9 @@ uint32_t Stepper::block_phase_isr() {
         interval = LA_isr_rate; // Decompression rate
       }
       else if(LA_decomp_add_steps && LA_current_adv_steps > 0) { // Additional decompression at the beginning of a slower segment, following a deceleration phase
-        if(LA_decomp_add_steps > 0) {
-          LA_decomp_add_steps--; // Secondary non-persistent counter for add_decomp only
-          LA_steps--;
-          LA_current_adv_steps--;
-        } else {
-          LA_decomp_add_steps++;
-          LA_steps++;
-          LA_current_adv_steps++;
-        }
+        LA_decomp_add_steps--;  // Secondary non-persistent counter for add_decomp only
+        LA_steps--;
+        LA_current_adv_steps--;
         interval = LA_isr_rate; // Default (compression) rate
       }
       else if (step_events_completed <= decelerate_after && LA_current_adv_steps < LA_max_adv_steps) { // Regular compression
