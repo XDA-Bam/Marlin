@@ -1910,9 +1910,10 @@ uint32_t Stepper::block_phase_isr() {
         #if ENABLED(LIN_ADVANCE)
           if (LA_use_advance_lead) {
             // Wake up eISR on first deceleration loop and fire ISR if final adv_rate is reached
-            if (step_events_completed <= decelerate_after + steps_per_isr || (LA_steps && LA_isr_rate != current_block->advance_speed)) {
+            if (step_events_completed <= decelerate_after + steps_per_isr || (LA_steps && LA_isr_rate != current_block->decomp_speed)) {
               initiateLA();
-              LA_isr_rate = current_block->advance_speed;
+              LA_isr_rate = current_block->decomp_speed;
+//              SERIAL_ECHOLNPAIR("sec:",step_events_completed," dea:",decelerate_after," las:",LA_steps," lcas:",LA_current_adv_steps);
             }
           }
           else if (LA_steps) nextAdvanceISR = 0;
@@ -2257,16 +2258,15 @@ uint32_t Stepper::block_phase_isr() {
     uint32_t interval;
 
     if (LA_use_advance_lead) {
-      if (step_events_completed > decelerate_after && LA_current_adv_steps > LA_final_adv_steps) {
-        LA_steps--;
-        LA_current_adv_steps--;
-        interval = LA_isr_rate;
+      if (step_events_completed > decelerate_after && LA_current_adv_steps > LA_final_adv_steps) { // Regular decompression
+        LA_steps--;             // Actual step
+        LA_current_adv_steps--; // Main persistent step counter for LA
+        interval = LA_isr_rate; // Decompression rate
       }
-      else if (step_events_completed < decelerate_after && LA_current_adv_steps < LA_max_adv_steps) {
-             //step_events_completed <= (uint32_t)accelerate_until) {
+      else if (step_events_completed < decelerate_after && LA_current_adv_steps < LA_max_adv_steps) { // Regular compression
         LA_steps++;
         LA_current_adv_steps++;
-        interval = LA_isr_rate;
+        interval = LA_isr_rate; // Default (compression) rate
       }
       else
         interval = LA_isr_rate = LA_ADV_NEVER;

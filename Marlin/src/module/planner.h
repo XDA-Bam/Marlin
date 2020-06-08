@@ -193,7 +193,8 @@ typedef struct block_t {
     bool use_advance_lead;
     uint16_t advance_speed,                 // STEP timer value for extruder speed offset ISR
              max_adv_steps,                 // max. advance steps to get cruising speed pressure (not always nominal_speed!)
-             final_adv_steps;               // advance steps due to exit speed
+             final_adv_steps,               // advance steps due to exit speed
+             decomp_speed;                  // timer value for deceleration
     float e_D_ratio;
   #endif
 
@@ -373,6 +374,7 @@ class Planner {
 
     #if ENABLED(LIN_ADVANCE)
       static float extruder_advance_K[EXTRUDERS];
+      static float extruder_advance_Kd[EXTRUDERS];
     #endif
 
     /**

@@ -2038,6 +2038,9 @@ void MarlinSettings::postprocess() {
         #if ENABLED(LIN_ADVANCE)
           if (!validating)
             COPY(planner.extruder_advance_K, extruder_advance_K);
+            LOOP_L_N(i, EXTRUDERS) {
+              planner.extruder_advance_Kd[i] = planner.extruder_advance_K[i];
+            }
         #endif
       }
 
@@ -2630,6 +2633,7 @@ void MarlinSettings::reset() {
   #if ENABLED(LIN_ADVANCE)
     LOOP_L_N(i, EXTRUDERS) {
       planner.extruder_advance_K[i] = LIN_ADVANCE_K;
+      planner.extruder_advance_Kd[i] = LIN_ADVANCE_K;
       TERN_(EXTRA_LIN_ADVANCE_K, other_extruder_advance_K[i] = LIN_ADVANCE_K);
     }
   #endif
@@ -3516,7 +3520,7 @@ void MarlinSettings::reset() {
       CONFIG_ECHO_HEADING("Linear Advance:");
       #if EXTRUDERS < 2
         CONFIG_ECHO_START();
-        SERIAL_ECHOLNPAIR("  M900 K", planner.extruder_advance_K[0]);
+        SERIAL_ECHOLNPAIR("  M900 K", planner.extruder_advance_K[0], " D=",planner.extruder_advance_Kd[0]);
       #else
         LOOP_L_N(i, EXTRUDERS) {
           CONFIG_ECHO_START();
