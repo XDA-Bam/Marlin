@@ -1187,15 +1187,14 @@ void Planner::recalculate_trapezoids() {
                 if(next_entry_speed < current_nominal_speed) {
                   const float step_diff = (current_nominal_speed - next_entry_speed) * step_mult;
                   const uint16_t decomp_steps = step_diff * extruder_advance_Kd[active_extruder]; // = (block->max_adv_steps - block->final_adv_steps) * Kd / K -> enhanced decompression (for Kd > K)
+                  const int32_t decomp_after_temp = block->decelerate_after + step_diff * extruder_advance_Ko[active_extruder]; // extruder_advance_Ko is never positive
                   block->final_adv_steps = block->max_adv_steps > decomp_steps ? block->max_adv_steps - decomp_steps : 0;
-                  block->decomp_offs_steps = -(step_diff * extruder_advance_Ko[active_extruder]);
-				  NOMORE(block->decomp_offs_steps, block->decelerate_after - block->accelerate_until - 1);
+                  block->decomp_after = decomp_after_temp > block->accelerate_until ? decomp_after_temp : block->accelerate_until;
                 } else {
                   block->final_adv_steps = next_entry_speed * comp;
-                  block->decomp_offs_steps = 0;
+                  block->decomp_after = block->decelerate_after;
                 }
-                
-//                SERIAL_ECHOLNPAIR("P: comp:",comp," mas:",block->max_adv_steps," fas:",block->final_adv_steps," nes:",next_entry_speed," ads:",block->decomp_add_steps);
+//                SERIAL_ECHOLNPAIR(mas:",block->max_adv_steps," fas:",block->final_adv_steps," nes:",next_entry_speed," da:",block->decomp_after);
               }
             #endif
           }
