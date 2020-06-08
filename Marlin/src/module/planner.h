@@ -194,6 +194,7 @@ typedef struct block_t {
     uint16_t advance_speed,                 // STEP timer value for extruder speed offset ISR
              max_adv_steps,                 // max. advance steps to get cruising speed pressure (not always nominal_speed!)
              final_adv_steps,               // advance steps due to exit speed
+             fast_recomp_steps,             // fast recompression steps in following block (only non-zero for Kd > K)
              decomp_speed;                  // timer value for deceleration
     float e_D_ratio;
   #endif

@@ -215,10 +215,12 @@ uint32_t Stepper::advance_divisor = 0,
 #if ENABLED(LIN_ADVANCE)
 
   uint32_t Stepper::nextAdvanceISR = LA_ADV_NEVER,
-           Stepper::LA_isr_rate = LA_ADV_NEVER;
+           Stepper::LA_isr_rate = LA_ADV_NEVER,
+           Stepper::LA_prev_decomp_speed = LA_ADV_NEVER;
   uint16_t Stepper::LA_current_adv_steps = 0,
            Stepper::LA_final_adv_steps,
-           Stepper::LA_max_adv_steps;
+           Stepper::LA_max_adv_steps,
+           Stepper::LA_fast_recomp_steps = 0;
 
   int8_t   Stepper::LA_steps = 0;
 
@@ -1836,7 +1838,18 @@ uint32_t Stepper::block_phase_isr() {
         #if ENABLED(LIN_ADVANCE)
           if (LA_use_advance_lead) {
             // Fire ISR if final adv_rate is reached
-            if (LA_steps && LA_isr_rate != current_block->advance_speed) nextAdvanceISR = 0;
+            if (LA_fast_recomp_steps) {
+              if (LA_steps && LA_isr_rate != LA_prev_decomp_speed) {
+                LA_isr_rate = LA_prev_decomp_speed;
+                nextAdvanceISR = 0;
+              }
+            }
+            else {
+              if (LA_steps && LA_isr_rate != current_block->advance_speed) {
+                LA_isr_rate = current_block->advance_speed;
+                nextAdvanceISR = 0;
+              }
+            }
           }
           else if (LA_steps) nextAdvanceISR = 0;
         #endif
@@ -1912,7 +1925,7 @@ uint32_t Stepper::block_phase_isr() {
             // Wake up eISR on first deceleration loop and fire ISR if final adv_rate is reached
             if (step_events_completed <= decelerate_after + steps_per_isr || (LA_steps && LA_isr_rate != current_block->decomp_speed)) {
               initiateLA();
-              LA_isr_rate = current_block->decomp_speed;
+              LA_isr_rate = LA_prev_decomp_speed = current_block->decomp_speed;
 //              SERIAL_ECHOLNPAIR("sec:",step_events_completed," dea:",decelerate_after," las:",LA_steps," lcas:",LA_current_adv_steps);
             }
           }
@@ -1953,7 +1966,18 @@ uint32_t Stepper::block_phase_isr() {
 
         #if ENABLED(LIN_ADVANCE)
           // If there are any esteps, fire the next advance_isr "now"
-          if (LA_steps && LA_isr_rate != current_block->advance_speed) initiateLA();
+          if (LA_fast_recomp_steps) {
+            if (LA_steps && LA_isr_rate != LA_prev_decomp_speed) {
+              LA_isr_rate = LA_prev_decomp_speed;
+              initiateLA();
+            }
+          }
+          else {
+            if (LA_steps && LA_isr_rate != current_block->advance_speed) {
+              LA_isr_rate = current_block->advance_speed;
+              initiateLA();
+            }
+          }
         #endif
 
         // Calculate the ticks_nominal for this nominal speed, if not done yet
@@ -2148,8 +2172,13 @@ uint32_t Stepper::block_phase_isr() {
         if ((LA_use_advance_lead = current_block->use_advance_lead)) {
           LA_final_adv_steps = current_block->final_adv_steps;
           LA_max_adv_steps = current_block->max_adv_steps;
+          LA_fast_recomp_steps = current_block->fast_recomp_steps;
           initiateLA(); // Start the ISR
-          LA_isr_rate = current_block->advance_speed;
+
+          if (LA_fast_recomp_steps)
+            LA_isr_rate = LA_prev_decomp_speed;
+          else
+            LA_isr_rate = current_block->advance_speed;
         }
         else LA_isr_rate = LA_ADV_NEVER;
       #endif
@@ -2266,7 +2295,10 @@ uint32_t Stepper::block_phase_isr() {
       else if (step_events_completed < decelerate_after && LA_current_adv_steps < LA_max_adv_steps) { // Regular compression
         LA_steps++;
         LA_current_adv_steps++;
-        interval = LA_isr_rate; // Default (compression) rate
+        if (LA_fast_recomp_steps)
+          LA_fast_recomp_steps--;
+
+        interval = LA_isr_rate; // Default (compression) rate for LA_fast_recomp_steps == 0, decompression rate otherwise
       }
       else
         interval = LA_isr_rate = LA_ADV_NEVER;
