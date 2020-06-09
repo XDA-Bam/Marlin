@@ -2166,7 +2166,10 @@ uint32_t Stepper::block_phase_isr() {
       #if ENABLED(LIN_ADVANCE)
         #if DISABLED(MIXING_EXTRUDER) && E_STEPPERS > 1
           // If the now active extruder wasn't in use during the last move, its pressure is most likely gone.
-          if (stepper_extruder != last_moved_extruder) LA_current_adv_steps = 0;
+          if (stepper_extruder != last_moved_extruder) {
+            LA_current_adv_steps = 0;
+            LA_fast_recomp_steps = 0; // Reset fast recompression steps, too
+          }
         #endif
 
         if ((LA_use_advance_lead = current_block->use_advance_lead)) {
@@ -2180,7 +2183,10 @@ uint32_t Stepper::block_phase_isr() {
           else
             LA_isr_rate = current_block->advance_speed;
         }
-        else LA_isr_rate = LA_ADV_NEVER;
+        else {
+          LA_isr_rate = LA_ADV_NEVER;
+          LA_fast_recomp_steps = 0; // Reset fast recompression steps in case of retraction and travel moves
+        }
       #endif
 
       if ( ENABLED(HAS_L64XX)  // Always set direction for L64xx (Also enables the chips)
