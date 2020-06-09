@@ -1820,8 +1820,8 @@ uint32_t Stepper::block_phase_isr() {
       #if ENABLED(LIN_ADVANCE)
         if (LA_use_advance_lead) {
           // Wake up eISR on first deceleration loop (minus decompression offset) and fire ISR if final adv_rate is reached
-          if (step_events_completed > LA_decomp_after) {
-            if (step_events_completed <= LA_decomp_after + steps_per_isr || (LA_steps && LA_isr_rate != current_block->decomp_speed)) {
+          if (step_events_completed > current_block->decomp_after) {
+            if (step_events_completed <= current_block->decomp_after + steps_per_isr || (LA_steps && LA_isr_rate != current_block->decomp_speed)) {
               initiateLA();
               LA_isr_rate = current_block->decomp_speed;
             }
