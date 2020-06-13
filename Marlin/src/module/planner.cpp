@@ -1182,6 +1182,7 @@ void Planner::recalculate_trapezoids() {
                         nomr = 1.0f / current_nominal_speed;
             calculate_trapezoid_for_block(block, current_entry_speed * nomr, next_entry_speed * nomr);
             #if ENABLED(LIN_ADVANCE)
+            //SERIAL_ECHOPAIR("LA:", block->use_advance_lead, " K:", extruder_advance_K[active_extruder], " Kd:", extruder_advance_Kd[active_extruder]);
               if (block->use_advance_lead) {
                 const float step_mult = block->e_D_ratio * settings.axis_steps_per_mm[E_AXIS],
                             comp = extruder_advance_K[active_extruder] * step_mult;
@@ -1197,7 +1198,8 @@ void Planner::recalculate_trapezoids() {
                   block->final_adv_steps = final_adv_temp;
                   block->fast_recomp_steps = 0;
                 }
-//                SERIAL_ECHOLNPAIR(" mas:",block->max_adv_steps," fas:",block->final_adv_steps," nes:",next_entry_speed);
+                //SERIAL_ECHOLNPAIR(" mas:", block->max_adv_steps, " fas:", block->final_adv_steps, " fat:", final_adv_temp, " frs:", block->fast_recomp_steps);
+                //SERIAL_ECHOLNPAIR(" mas:",block->max_adv_steps," fas:",block->final_adv_steps," nes:",next_entry_speed);
               }
             #endif
           }

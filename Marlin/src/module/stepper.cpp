@@ -2312,6 +2312,7 @@ uint32_t Stepper::block_phase_isr() {
     else
       interval = LA_ADV_NEVER;
 
+    //SERIAL_ECHOLNPAIR("sec: ", step_events_completed, " cas: ", LA_current_adv_steps, " mas: ", LA_max_adv_steps, " fas: ", LA_final_adv_steps, " frc: ", LA_fast_recomp_steps);
     DIR_WAIT_BEFORE();
 
     #if ENABLED(MIXING_EXTRUDER)
