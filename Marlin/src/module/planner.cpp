@@ -1188,15 +1188,12 @@ void Planner::recalculate_trapezoids() {
                             comp = extruder_advance_K[active_extruder] * step_mult;
 
                 block->max_adv_steps = current_nominal_speed * comp;
-                uint16_t final_adv_temp = next_entry_speed * comp;
 				
                 if(next_entry_speed < current_nominal_speed) {
                   const uint16_t decomp_steps = (current_nominal_speed - next_entry_speed) * step_mult * extruder_advance_Kd[active_extruder]; // = (block->max_adv_steps - block->final_adv_steps) * Kd / K -> enhanced decompression (for Kd > K)
                   block->final_adv_steps = block->max_adv_steps > decomp_steps ? block->max_adv_steps - decomp_steps : 0;
-                  block->fast_recomp_steps = final_adv_temp > block->final_adv_steps? final_adv_temp - block->final_adv_steps : 0;
                 } else {
-                  block->final_adv_steps = final_adv_temp;
-                  block->fast_recomp_steps = 0;
+                  block->final_adv_steps = next_entry_speed * comp;
                 }
                 //SERIAL_ECHOLNPAIR(" mas:", block->max_adv_steps, " fas:", block->final_adv_steps, " fat:", final_adv_temp, " frs:", block->fast_recomp_steps);
                 //SERIAL_ECHOLNPAIR(" mas:",block->max_adv_steps," fas:",block->final_adv_steps," nes:",next_entry_speed);
