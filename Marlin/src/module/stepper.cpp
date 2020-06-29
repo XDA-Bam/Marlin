@@ -1850,7 +1850,7 @@ uint32_t Stepper::block_phase_isr() {
         acceleration_time += interval;
 
         #if ENABLED(LIN_ADVANCE)
-          if (LA_use_advance_lead) {
+          if (LA_use_advance_lead && step_events_completed < current_block->decomp_after) {
             // Fire ISR if final adv_rate is reached
             if (LA_steps && LA_isr_rate != current_block->advance_speed) nextAdvanceISR = 0;
           }

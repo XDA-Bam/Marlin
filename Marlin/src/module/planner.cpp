@@ -1187,9 +1187,9 @@ void Planner::recalculate_trapezoids() {
                 if(next_entry_speed < current_nominal_speed) {
                   const float step_diff = (current_nominal_speed - next_entry_speed) * step_mult;
                   const uint16_t decomp_steps = step_diff * extruder_advance_Kd[active_extruder]; // = (block->max_adv_steps - block->final_adv_steps) * Kd / K -> enhanced decompression (for Kd > K)
-                  const int32_t decomp_after_temp = block->decelerate_after + step_diff * extruder_advance_Ko[active_extruder]; // extruder_advance_Ko is never positive
+                  const int32_t decomp_after_temp = block->decelerate_after - step_diff * extruder_advance_Ko[active_extruder];
                   block->final_adv_steps = block->max_adv_steps > decomp_steps ? block->max_adv_steps - decomp_steps : 0;
-                  block->decomp_after = decomp_after_temp > block->accelerate_until ? decomp_after_temp : block->accelerate_until;
+                  block->decomp_after = decomp_after_temp > 1 ? decomp_after_temp : 1;
                 } else {
                   block->final_adv_steps = next_entry_speed * comp;
                   block->decomp_after = block->decelerate_after;
